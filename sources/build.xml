@@ -1,0 +1,116 @@
+<project name="ServiceAssuranceManager" default="usage" basedir=".">
+
+  <!-- Initializations -->
+  <target name="init">    
+    <echo message="------------ Building ServiceAssuranceManager ----------"/>
+    <echo message=""/>
+    <property name="sources" value="${basedir}"/>
+    <property name="classes" value="../classes"/>
+    <property name="external.jars" value="../libs/resty-0.3.1.jar:../libs/simple-4.1.21.jar:../libs/restconsole-0.1.0.jar:../libs/Logger-0.1.0.jar:../libs/mustache-compiler-0.8.4.jar"/>
+    <property name="api" value="${basedir}/docs"/>    
+    <property name="year" value="2017"/>
+    <property name="jars" value="../jars"/>
+    <property name="release" value="0.1.1" />
+  </target>
+
+  <!-- Build -->
+  <target name="build" depends="init">
+    <echo message="------ Compiling application"/>
+    <mkdir dir="${classes}"/>
+    <javac debug="on" srcdir="${sources}" classpath="${external.jars}"
+           source="1.7" target="1.7" includeantruntime="false">
+      <!-- destdir="${classes}" -->
+      <include name="fivegex/**" />
+      <!--<compilerarg value="-Xlint:unchecked" />--> 
+      <!--<compilerarg value="-verbose" /> -->
+      <!--<compilerarg value="-Xlint:deprecation" />-->
+
+    </javac>
+
+  </target>
+
+  <!-- Jar -->
+  <target name="jars" depends="build">
+    <delete file="serv_ass_mgr.jar"/>
+    <delete file="MANIFEST.MF"/>
+    <!--<manifest file="MANIFEST.MF">
+      <attribute name="Built-By" value="${user.name}"/>
+      <attribute name="Main-Class" value="fivegex.sla.ServiceAssuranceManager"/>
+    </manifest>
+    !-->
+    <jar destfile="serv_ass_mgr.jar"
+         basedir="."
+         includes="**/*.class"
+         manifest="MANIFEST.MF">
+
+         <manifest file="MANIFEST.MF">
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Main-Class" value="fivegex.sla.ServiceAssuranceManager"/>
+         </manifest>     
+    </jar>
+
+  </target>
+
+  <!-- Archive -->
+  <target name="dist" depends="build">
+    <echo message="------ Building Jar file"/>
+    <jar jarfile="${jars}/serv_ass_mgr-${release}.jar"
+         basedir="${basedir}" includes="fivegex/**" >
+
+         <zipgroupfileset dir="../libs/" includes="*.jar" />
+
+    </jar>
+    <jar jarfile="${jars}/serv_ass_mgr-bin-${release}.jar"
+         basedir="${basedir}" includes="fivegex/**" excludes="**/*.java">
+
+         <zipgroupfileset dir="../libs/" includes="*.jar" />
+
+    </jar>
+    <jar jarfile="${jars}/serv_ass_mgr-bin-src-${release}.jar"
+         basedir="${basedir}" includes="fivegex/**" excludes="**/*.class" />
+  </target>
+
+  <!-- JavaDoc -->
+  <target name="javadoc" depends="build">
+    <echo message="------ Running JavaDoc"/>
+
+    <javadoc packagenames="fivegex.*"
+             sourcepath="${sources}"
+             destdir="${api}"
+	     classpath="${external.jars}"
+	     excludepackagenames=""
+             bottom="Service Assurance Manager ${release}"
+             author="false">
+      <classpath>
+        <pathelement location="${classes}"/>
+      </classpath>
+    </javadoc>
+  </target>
+
+  <target name="clean" description="Delete class files and docs dir.">
+    <delete>
+      <fileset dir="${basedir}" includes="**/*.class"/>
+    </delete>
+    <delete dir="${api}" />
+  </target>
+
+  <!-- ALL -->
+  <target name="all" depends="dist, javadoc">
+  </target>
+
+  <!-- Usage -->
+  <target name="usage">
+    <echo message="*** Service Assurance Manager ANT build script ***"/>
+    <echo message="Usage : "/>
+    <echo message="   ant [target]"/>
+    <echo message=""/>     
+    <echo message="   target : "/>     
+    <echo message="            build : Build Application"/>     
+    <echo message="            dist  : Build Application + Archive (JAR)"/>     
+    <echo message="            javadoc  : Build Application + Javadoc"/>    
+    <echo message="            clean : Remove docs and .class files"/>      
+    <echo message="            all   : Build Application + Archive + JavaDoc"/>       
+  </target>
+  
+
+</project>

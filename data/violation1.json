@@ -1,0 +1,37 @@
+[
+  {
+     "uuid":"4d99d9f8-f421-4490-98a4-b7bc20a14f00",
+     "contractUuid":"violtest_ag1",
+     "kpiName":"memory",
+     "datetime":"Jan 19, 2018 9:54:40 PM",
+     "expectedValue":"memory LT 0.2",
+     "actualValue":"0.9781141115546773",
+     "breaches":[
+        {
+           "id":776,
+           "contractUUID":"violtest_ag1",
+           "datetime":"Jan 19, 2018 9:52:40 PM",
+           "metricName":"memory",
+           "value":"0.2611020262764644"
+        },
+        {
+           "id":777,
+           "contractUUID":"violtest_ag1",
+           "datetime":"Jan 19, 2018 9:53:20 PM",
+           "metricName":"memory",
+           "value":"0.270392657720141"
+        },
+        {
+           "contractUUID":"violtest_ag1",
+           "datetime":"Jan 19, 2018 9:54:40 PM",
+           "metricName":"memory",
+           "value":"0.9781141115546773"
+        }
+     ],
+     "policy":{
+        "id":3,
+        "count":3,
+        "timeInterval":"Jan 1, 1970 1:02:30 AM"
+     }
+  }
+]
