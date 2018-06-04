@@ -24,7 +24,7 @@ timestamps {
 			currentBuild.result = 'FAILURE'
 			throw any
 		} finally {
-			step([$class: 'Mailer', recipients: 'paolo.barone@hpe.com'])
+			step([$class: 'Mailer', recipients: '5gex-devel@tmit.bme.hu'])
 		}
     }
 }
