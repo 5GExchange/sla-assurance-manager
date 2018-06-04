@@ -28,8 +28,14 @@ import static us.monoid.web.Resty.content;
 public class ResourceOrchestratorInteractor {
     private final String orchestratorAddress;
     private final int orchestratorPort;
-    private final String slicerEndpoint = "/escape/get-config?blocking";
-    private final String gvnfmEndpoint = "/escape/edit-config?blocking";
+    private final String orchestratorURL;
+    private final String orchestratorEndpoint = "get-config?blocking";
+    
+    
+    private final String gvnfmAddress;
+    private final int gvnfmPort;
+    private final String gvnfmURL;
+    private final String gvnfmEndpoint = "edit-config?blocking";
     
     
     private final String infraURI;
@@ -42,28 +48,34 @@ public class ResourceOrchestratorInteractor {
     Logger logger;
     
     
-    public ResourceOrchestratorInteractor(String orchestratorAddress, int orchestratorPort) {
+    public ResourceOrchestratorInteractor(String orchestratorAddress, 
+                                          int orchestratorPort, 
+                                          String orchestratorURL,
+                                          String gvnfmAddress,
+                                          int gvnfmPort,
+                                          String gvnfmURL) {
+        
         logger = Logger.getLogger("log");
         logger.addOutput(System.err, new BitMask(MASK.ERROR));
         logger.addOutput(System.out, new BitMask(MASK.STDOUT));
         
         this.orchestratorAddress = orchestratorAddress;
         this.orchestratorPort = orchestratorPort;
+        this.orchestratorURL = orchestratorURL;
         
-        this.infraURI = "http://" + this.orchestratorAddress + ":" + this.orchestratorPort + slicerEndpoint;
-        this.gvnfmURI = "http://" + this.orchestratorAddress + ":" + this.orchestratorPort + gvnfmEndpoint;
+        this.gvnfmAddress = gvnfmAddress;
+        this.gvnfmPort = gvnfmPort;
+        this.gvnfmURL = gvnfmURL;
+        
+        this.infraURI = "http://" + this.orchestratorAddress + ":" + this.orchestratorPort + this.orchestratorURL + orchestratorEndpoint;
+        this.gvnfmURI = "http://" + this.gvnfmAddress + ":" + this.gvnfmPort + this.gvnfmURL + gvnfmEndpoint;
         rest = new Resty();
         
     }
     
     
-    public void getInfrastructureView() {
-        try {
-            infraView = rest.xml(infraURI); 
-        } catch (IOException e) {
-            logger.logln(MASK.ERROR, leadin() + "Cannot get infrastructure view from" + infraURI);
-        }
-        
+    public void getInfrastructureView() throws IOException {
+        infraView = rest.xml(infraURI);
     }
     
     
@@ -147,7 +159,7 @@ public class ResourceOrchestratorInteractor {
             response.put("success", true);
         } catch (IOException | JSONException e) {
             logger.logln(MASK.ERROR, leadin() + "Cannot update infrastructure view on Slicer/ESCAPE" + e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         return response;
         
@@ -203,9 +215,12 @@ public class ResourceOrchestratorInteractor {
     public static void main(String[] args) {
         String escapeHost = "clayone.ee.ucl.ac.uk";
         int escapePort = 8888;
+        String escapeURL = "/escape/orchestration/";
+        String gvnfmURL = "/escape/orchestration/";
+        
         
         try {
-            ResourceOrchestratorInteractor g = new ResourceOrchestratorInteractor(escapeHost, escapePort);
+            ResourceOrchestratorInteractor g = new ResourceOrchestratorInteractor(escapeHost, escapePort, escapeURL, escapeHost, escapePort, gvnfmURL);
             g.getInfrastructureView();
             g.getNFtype("host1");
             g.setMigrationStatusOnNF("host1");

@@ -89,7 +89,7 @@ public class ViolationHandler extends BasicRequestHandler implements RequestHand
             long time = System.currentTimeMillis();
 
             response.set("Content-Type", "application/json");
-            response.set("Server", "Slice Controller/1.0 (SimpleFramework 4.0)");
+            response.set("Server", "SLA Assurance Manager/0.1 (SimpleFramework 4.0)");
             response.setDate("Date", time);
             response.setDate("Last-Modified", time);
 

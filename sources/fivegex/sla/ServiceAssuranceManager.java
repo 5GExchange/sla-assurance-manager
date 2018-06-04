@@ -151,19 +151,40 @@ public class ServiceAssuranceManager {
 
             // setup ResourceOrchestratorInteractor
             JSONObject escapeConfig = config.getJSONObject("escape");
+            JSONObject gvnfmConfig = config.getJSONObject("gvnfm");
 
             if (escapeConfig == null) {
                 Logger.getLogger("log").logln(MASK.ERROR, leadin() + "No config for 'escape'");
                 return false;
             }
+            
+            if (gvnfmConfig == null) {
+                Logger.getLogger("log").logln(MASK.ERROR, leadin() + "No config for 'gvnfm'");
+                return false;
+            }
 
             String escapeHost = null;
             int escapePort = 0;
-
+            String escapeURL = null;
+            
             escapeHost = escapeConfig.getString("host");
             escapePort = escapeConfig.getInt("port");
+            escapeURL = escapeConfig.getString("url");
+            
+            String gvnfmHost = null;
+            int gvnfmPort = 0;
+            String gvnfmURL = null;
+            
+            gvnfmHost = gvnfmConfig.getString("host");
+            gvnfmPort = gvnfmConfig.getInt("port");
+            gvnfmURL = gvnfmConfig.getString("url");
         
-            resourceOrchestratorInteractor = new ResourceOrchestratorInteractor(escapeHost, escapePort);
+            resourceOrchestratorInteractor = new ResourceOrchestratorInteractor(escapeHost, 
+                                                                                escapePort,
+                                                                                escapeURL,
+                                                                                gvnfmHost,
+                                                                                gvnfmPort,
+                                                                                gvnfmURL);
             // get a snapshot of the infrastructure
             resourceOrchestratorInteractor.getInfrastructureView();
             
@@ -192,7 +213,11 @@ public class ServiceAssuranceManager {
         } catch (JSONException jse) {
             Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Config error " + jse.getMessage());
             return false;
+        } catch (IOException e) {
+            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Error contacting the resource orchestrator: " + e.getMessage());
+            return false;
         }
+        
 
     }
 

@@ -19,7 +19,9 @@ public class ServiceAssuranceManagerConsole extends AbstractRestConsole {
 
         // setup /violation/ handler
         defineRequestHandler("/violation/.*", new ViolationHandler());
-
+        
+        // setup /slaam/
+        defineRequestHandler("/ping/.*", new slaAssuranceTest());
 
     }
 

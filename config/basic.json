@@ -1,7 +1,13 @@
 {
-    "escape": {
+    "escape" : {
         "host" : "clayone.ee.ucl.ac.uk",
-        "port" : 8888
+        "port" : 8888,
+	"url" : "/escape/orchestration/"
+    },
+
+    "gvnfm" : {
+ 	"host" : "clayone.ee.ucl.ac.uk",
+	"port" : 8899,
+	"url" : "/gvnfm/"
     }
-    
 }
