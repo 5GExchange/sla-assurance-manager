@@ -14,7 +14,7 @@ timestamps {
 				docker cp ./ ${c.id}:/root
                 docker exec ${c.id} ant -f /root/sources/build.xml dist
                 rm -rf ./dist
-                docker cp ${c.id}:/root/dist ./
+                docker cp ${c.id}:/root/jars ./
                 """
             }
             buildImage("sla-assurance-manager:${marketplaceVersion}", "--build-arg GIT_REVISION=${gitRevision} sla-assurance-manager")
