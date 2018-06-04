@@ -17,7 +17,7 @@ timestamps {
                 docker cp ${c.id}:/root/jars ./
                 """
             }
-            buildImage("sla-assurance-manager:${marketplaceVersion}", "--build-arg GIT_REVISION=${gitRevision} sla-assurance-manager")
+            buildImage("sla-assurance-manager:${marketplaceVersion}", "--build-arg GIT_REVISION=${gitRevision} .")
 			
 			currentBuild.result = 'SUCCESS'
         } catch (any) {
