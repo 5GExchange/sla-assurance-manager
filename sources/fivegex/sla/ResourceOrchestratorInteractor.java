@@ -90,7 +90,7 @@ public class ResourceOrchestratorInteractor {
                 infraView = rest.xml(infraURI);
                 retrieved = true;
                 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 logger.logln(MASK.STDOUT, leadin() + "Error while getting infrastructure view from RO");
                 try {
                     Thread.sleep(3000);
