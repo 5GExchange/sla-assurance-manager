@@ -166,10 +166,12 @@ public class ServiceAssuranceManager {
             String escapeHost = null;
             int escapePort = 0;
             String escapeURL = null;
+            int escapeTimeout = 0;
             
             escapeHost = escapeConfig.getString("host");
             escapePort = escapeConfig.getInt("port");
             escapeURL = escapeConfig.getString("url");
+            escapeTimeout = escapeConfig.getInt("timeout");
             
             String gvnfmHost = null;
             int gvnfmPort = 0;
@@ -185,8 +187,10 @@ public class ServiceAssuranceManager {
                                                                                 gvnfmHost,
                                                                                 gvnfmPort,
                                                                                 gvnfmURL);
-            // get a snapshot of the infrastructure
-            resourceOrchestratorInteractor.getInfrastructureView();
+            
+
+            // get a snapshot of the infrastructure waiting up to timeout seconds
+            resourceOrchestratorInteractor.getInfrastructureView(escapeTimeout);
             
             // setup queue
             queue = new LinkedBlockingQueue<ViolationInfo>();

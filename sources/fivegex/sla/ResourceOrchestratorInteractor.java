@@ -79,6 +79,32 @@ public class ResourceOrchestratorInteractor {
     }
     
     
+    public void getInfrastructureView(int timeout) throws IOException {
+        boolean retrieved = false;
+        long t1, t2;
+        t1 = System.currentTimeMillis();
+        t2 = t1;
+        
+        while ((t2 - t1)/1000 < timeout && !retrieved) {
+            try {
+                infraView = rest.xml(infraURI);
+                retrieved = true;
+                
+            } catch (IOException e) {
+                logger.logln(MASK.STDOUT, leadin() + "Error while getting infrastructure view from RO");
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ie) {}
+                
+                t2 = System.currentTimeMillis();
+            }
+        }
+        
+        if (!retrieved)
+            throw new IOException("Could not retrieve infrastructure view from RO");
+    }
+    
+    
     public String getNFtype(String vnfId) throws IOException {
         String nfId;
         boolean found = false;

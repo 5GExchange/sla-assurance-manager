@@ -1,8 +1,6 @@
 package fivegex.sla.console;
 
 import fivegex.sla.ServiceAssuranceManager;
-import fivegex.sla.ViolationInfo;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.simpleframework.http.Response;
 import org.simpleframework.http.Request;
@@ -89,21 +87,11 @@ public class slaAssuranceTest extends BasicRequestHandler implements RequestHand
 
     }
 
-    /**
-     * POST: Process a violation from a request and send a response.
-       Where:
-       contractUuid: instance ID
-       kpiName: KPI key
-       expectedValue: Formula to evaluate the KPI
-       actualValue: Value received when the last breach happened
-       breaches: List of breaches that lead to the violation
-       Policy: Policy to apply to evaluate breaches (in this example: 3 breaches in 2:30 minutes)
-     */
     
     public void testResult(Request request, Response response) throws IOException, JSONException {
         try {
             
-            Logger.getLogger("log").logln(MASK.STDOUT, "ServiceAssuranceManager REST Violation Handler: " +  "testResult");
+            Logger.getLogger("log").logln(MASK.STDOUT, "ServiceAssuranceManager REST Test Handler: " +  "invoked ping endpoint");
             JSONObject jsobj = new JSONObject();
             
             boolean success = true;
