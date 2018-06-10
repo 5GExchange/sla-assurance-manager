@@ -1,7 +1,6 @@
 package fivegex.sla;
 
 import java.lang.reflect.Constructor;
-import cc.clayman.logging.BitMask;
 import cc.clayman.logging.Logger;
 import cc.clayman.logging.MASK;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -47,7 +46,7 @@ public class ViolationProcessor implements Runnable {
             }
 
             // try and find thw vnf type
-            String name = vInfo.name;
+            String vnfID = vInfo.name;
             String kpi = vInfo.kpi;
             long timestamp = vInfo.timestamp;
 
@@ -55,15 +54,17 @@ public class ViolationProcessor implements Runnable {
             String vnfType = null;
 
             try {
-                vnfType = resourceOrchestratorInteractor.getNFtype(name);
+                // update to the latest infrastructure view
+                resourceOrchestratorInteractor.getInfrastructureView();
+                vnfType = resourceOrchestratorInteractor.getNFtype(vnfID);
 
-                System.err.println("ResourceOrchestratorInteractor says contractUuid " + name + " => " + vnfType);
+                System.err.println("ResourceOrchestratorInteractor says contractUuid " + vnfID + " => " + vnfType);
 
                 System.err.println("KPI name = " + kpi);
                 
-            } catch (IOException ioe) {
+            } catch (ResourceOrchestratorException roe) {
                 vnfType = null;
-                System.err.println("ResourceOrchestratorInteractor " + ioe.getMessage());
+                System.err.println("ResourceOrchestratorInteractor failed: " + roe.getMessage());
             }
 
 
@@ -71,9 +72,14 @@ public class ViolationProcessor implements Runnable {
             if (vnfType != null) {
                 ViolationAnalyser violationAnalyser = trigger(vnfType, kpi, timestamp);
 
-                violationAnalyser.setContext(vnfType, kpi, timestamp);
+                violationAnalyser.setContext(vnfID, vnfType, kpi, timestamp);
 
-                violationAnalyser.execute();
+                try {
+                    if (violationAnalyser.execute())
+                        System.err.println("Lyfecycle management event correcly performed for VNF => " + vnfID);
+                } catch (ViolationAnalyserException vae) {
+                  System.err.println("Error while performing lifecycle event: " + vae.getMessage());
+                  }
             }
 
         }

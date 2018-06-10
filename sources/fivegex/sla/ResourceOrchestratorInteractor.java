@@ -74,12 +74,16 @@ public class ResourceOrchestratorInteractor {
     }
     
     
-    public void getInfrastructureView() throws IOException {
-        infraView = rest.xml(infraURI);
+    public void getInfrastructureView() throws ResourceOrchestratorException {
+        try {
+            infraView = rest.xml(infraURI);
+        } catch (IOException ioe) {
+            throw new ResourceOrchestratorException("Error while getting infrastructure view from RO: " + ioe.getMessage());
+        }
     }
     
     
-    public void getInfrastructureView(int timeout) throws IOException {
+    public void getInfrastructureView(int timeout) throws ResourceOrchestratorException {
         boolean retrieved = false;
         long t1, t2;
         t1 = System.currentTimeMillis();
@@ -90,8 +94,8 @@ public class ResourceOrchestratorInteractor {
                 infraView = rest.xml(infraURI);
                 retrieved = true;
                 
-            } catch (Exception e) {
-                logger.logln(MASK.STDOUT, leadin() + "Error while getting infrastructure view from RO");
+            } catch (IOException e) {
+                logger.logln(MASK.STDOUT, leadin() + "Error while getting infrastructure view from RO: " + e.getMessage());
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException ie) {}
@@ -101,20 +105,27 @@ public class ResourceOrchestratorInteractor {
         }
         
         if (!retrieved)
-            throw new IOException("Could not retrieve infrastructure view from RO");
+            throw new ResourceOrchestratorException("Could not retrieve infrastructure view from RO");
     }
     
     
-    public String getNFtype(String vnfId) throws IOException {
+    public String getNFtype(String vnfId) throws ResourceOrchestratorException {
         String nfId;
         boolean found = false;
         String nfType = "";
-           
-        infraViewDoc = infraView.doc();
-        infraViewDoc.getDocumentElement().normalize();
-
+        
+        try { 
+            infraViewDoc = infraView.doc();
+            infraViewDoc.getDocumentElement().normalize();
+        } catch (IOException ioe) {
+            throw new ResourceOrchestratorException("Error while processing Infrastructure Virtualizer: " + ioe.getMessage());
+        }
+        
         NodeList nfInstances = infraViewDoc.getElementsByTagName("NF_instances");
         Node nfs = nfInstances.item(0);
+        if (nfs == null)
+            throw new ResourceOrchestratorException("There are no NFs in the current infrastructure");
+        
         NodeList nodes = nfs.getChildNodes();
 
         for (int i = 0; i < nodes.getLength() && !found; i++) {
@@ -132,7 +143,7 @@ public class ResourceOrchestratorInteractor {
         }
 
         if (!found) {
-            throw new IOException("NF " + vnfId + " not found in the current infrastructure");
+            throw new ResourceOrchestratorException("NF " + vnfId + " not found in the current infrastructure");
             
         }
         
@@ -141,12 +152,16 @@ public class ResourceOrchestratorInteractor {
     }
     
     
-    public void setMigrationStatusOnNF(String vnfId) throws IOException {
+    public void setMigrationStatusOnNF(String vnfId) throws ResourceOrchestratorException {
         String nfId;
         boolean found = false;
            
-        infraViewDoc = infraView.doc();
-        infraViewDoc.getDocumentElement().normalize();
+        try { 
+            infraViewDoc = infraView.doc();
+            infraViewDoc.getDocumentElement().normalize();
+        } catch (IOException ioe) {
+            throw new ResourceOrchestratorException("Error while processing Infrastructure Virtualizer: " + ioe.getMessage());
+        }
 
         NodeList nfInstances = infraViewDoc.getElementsByTagName("NF_instances");
         Node nfs = nfInstances.item(0);
@@ -169,26 +184,24 @@ public class ResourceOrchestratorInteractor {
         }
 
         if (!found)
-            throw new IOException("NF " + vnfId + " not found in the current infrastructure");
+            throw new ResourceOrchestratorException("NF " + vnfId + " not found in the current infrastructure");
 
     }
     
-    // this might not be tested yet depending on the development status of ESCAPE and GVNFM
-    public JSONObject startMigration() {
+    
+    public JSONObject startMigration() throws ResourceOrchestratorException {
         JSONObject response = new JSONObject();
         
         try { 
             XMLResource xml = rest.xml(gvnfmURI, content(getRequestBodyAsBytes(infraViewDoc)));
-            //getNiceLyFormattedXMLDocument(xml.doc());
             
             // Might include additional info from above reply (once agreed on format)
             response.put("success", true);
+            return response;
+            
         } catch (IOException | JSONException e) {
-            logger.logln(MASK.ERROR, leadin() + "Cannot update infrastructure view on Slicer/ESCAPE" + e.getMessage());
-            //e.printStackTrace();
-        }
-        return response;
-        
+            throw new ResourceOrchestratorException("Migration failed: cannot update infrastructure view on Slicer/ESCAPE. " + e.getMessage());
+          }
     }
     
     

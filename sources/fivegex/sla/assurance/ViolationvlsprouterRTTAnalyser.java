@@ -10,7 +10,7 @@ public class ViolationvlsprouterRTTAnalyser implements ViolationAnalyser {
         System.err.println("In ViolationvlsprouterRTTAnalyser");
     }
 
-    public void setContext(String vnfType, String kpiType, long timestamp) {
+    public void setContext(String vnfID, String vnfType, String kpiType, long timestamp) {
     }
 
     public boolean execute() {

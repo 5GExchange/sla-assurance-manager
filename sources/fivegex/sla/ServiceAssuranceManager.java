@@ -217,8 +217,8 @@ public class ServiceAssuranceManager {
         } catch (JSONException jse) {
             Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Config error " + jse.getMessage());
             return false;
-        } catch (IOException e) {
-            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Error contacting the resource orchestrator: " + e.getMessage());
+        } catch (ResourceOrchestratorException roe) {
+            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Error contacting the resource orchestrator: " + roe.getMessage());
             return false;
         }
         
