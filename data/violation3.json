@@ -1,7 +1,7 @@
 [
   {
      "uuid":"4d99d9f8-f421-4490-98a4-b7bc20a14f00",
-     "contractUuid":"host001id",
+     "contractUuid":"vnfhost001id",
      "kpiName":"RTT",
      "datetime":"Jan 19, 2018 9:54:40 PM",
      "expectedValue":"RTT LT 10",

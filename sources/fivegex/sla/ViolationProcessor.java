@@ -45,8 +45,11 @@ public class ViolationProcessor implements Runnable {
                 isRunning = false;
             }
 
-            // try and find thw vnf type
-            String vnfID = vInfo.name;
+            // try and find the vnf type
+            
+            // vnfID is e.g., the content of  "agreementId" : "vnfvCDN_SLA_TEST_0_80a33f57-a39b-11e7-b368-0242ac120008"
+            // without "vnf"            
+            String vnfID = trimVNFid(vInfo.name);
             String kpi = vInfo.kpi;
             long timestamp = vInfo.timestamp;
 
@@ -72,11 +75,16 @@ public class ViolationProcessor implements Runnable {
             if (vnfType != null) {
                 ViolationAnalyser violationAnalyser = trigger(vnfType, kpi, timestamp);
 
-                violationAnalyser.setContext(vnfID, vnfType, kpi, timestamp);
-
                 try {
-                    if (violationAnalyser.execute())
-                        System.err.println("Lyfecycle management event correcly performed for VNF => " + vnfID);
+                    if (violationAnalyser != null) {
+                        violationAnalyser.setContext(vnfID, vnfType, kpi, timestamp);
+                        if (violationAnalyser.execute())
+                            System.err.println("Lyfecycle management event correcly performed for VNF => " + vnfID);
+                    }
+                    else
+                        System.err.println("There is no life cycle event defined for VNF type => " + vnfType + " and KPI => " + kpi);
+                    
+                    
                 } catch (ViolationAnalyserException vae) {
                   System.err.println("Error while performing lifecycle event: " + vae.getMessage());
                   }
@@ -131,6 +139,10 @@ public class ViolationProcessor implements Runnable {
     }
 
 
+    private String trimVNFid(String rawId) {
+        return rawId.replaceFirst("^vnf", "");
+    }
+    
     private String leadin() {
         return "ViolationProcessor: ";
     }
