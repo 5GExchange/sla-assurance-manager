@@ -139,7 +139,6 @@ public class ServiceAssuranceManager {
     public boolean start() {
         boolean resVal = true;
         JSONObject escapeConfig = null;
-        JSONObject gvnfmConfig = null;
         
         String escapeHost;
         int escapePort;
@@ -147,54 +146,29 @@ public class ServiceAssuranceManager {
         int escapeTimeout;
         
         try {
-            escapeConfig = config.getJSONObject("escape");
+            escapeConfig = config.getJSONObject("ro");
             
             escapeHost = escapeConfig.getString("host");
             escapePort = escapeConfig.getInt("port");
             escapeURL = escapeConfig.getString("url");
             escapeTimeout = escapeConfig.getInt("timeout");
         } catch (JSONException jex) {
-            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Warning: No valid config for 'escape' found, using default configuration");
+            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Warning: No valid config for 'RO' found, using default configuration");
             
-            escapeHost = "escape";
+            escapeHost = "slicer";
             escapePort = 8888;
             escapeURL = "/ro/v0";
             escapeTimeout = 20;
-            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "escape Host => " + escapeHost + 
-                                                                 "; escape Port => " + escapePort + 
-                                                                 "; escape URL => " + escapeURL +
-                                                                 "; escape Timeout => " + escapeTimeout);
-        }
-        
-        String gvnfmHost;
-        int gvnfmPort;
-        String gvnfmURL;
-        
-        try {
-            gvnfmConfig = config.getJSONObject("gvnfm");
-            
-            gvnfmHost = gvnfmConfig.getString("host");
-            gvnfmPort = gvnfmConfig.getInt("port");
-            gvnfmURL = gvnfmConfig.getString("url");
-        } catch (JSONException jex) {
-            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "Warning: No valid config for 'gvnfm' found, using ESCAPE configuration");
-            
-            gvnfmHost = escapeHost;
-            gvnfmPort = escapePort;
-            gvnfmURL = escapeURL;
-            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "gvnfm Host => " + gvnfmHost + 
-                                                                 "; gvnfm Port => " + gvnfmPort + 
-                                                                 "; gvnfm URL => " + gvnfmURL);
-            
+            Logger.getLogger("log").logln(MASK.ERROR, leadin() + "RO Host => " + escapeHost + 
+                                                                 "; RO Port => " + escapePort + 
+                                                                 "; RO URL => " + escapeURL +
+                                                                 "; RO Timeout => " + escapeTimeout);
         }
             
         try {
             resourceOrchestratorInteractor = new ResourceOrchestratorInteractor(escapeHost, 
                                                                                 escapePort,
-                                                                                escapeURL,
-                                                                                gvnfmHost,
-                                                                                gvnfmPort,
-                                                                                gvnfmURL);
+                                                                                escapeURL);
 
             // get a snapshot of the infrastructure waiting up to timeout seconds
             resourceOrchestratorInteractor.getInfrastructureView(escapeTimeout);

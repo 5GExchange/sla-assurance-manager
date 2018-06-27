@@ -4,6 +4,8 @@ import fivegex.sla.ResourceOrchestratorException;
 import fivegex.sla.ResourceOrchestratorInteractor;
 import fivegex.sla.ViolationAnalyser;
 import fivegex.sla.ViolationAnalyserException;
+import us.monoid.json.JSONException;
+import us.monoid.json.JSONObject;
 
 
 public class Violationbalance_serverRTTAnalyser implements ViolationAnalyser {
@@ -25,13 +27,15 @@ public class Violationbalance_serverRTTAnalyser implements ViolationAnalyser {
     public boolean execute() throws ViolationAnalyserException {
         try {
             ro.setMigrationStatusOnNF(vnfID);
-            ro.startMigration();
-            System.err.println("Violationbalance_serverRTTAnalyser: Performed migration of vnf => " + vnfID);
-        } catch (ResourceOrchestratorException roe) {
-            throw new ViolationAnalyserException("ViolationAnalyser error: " + roe.getMessage());  
+            JSONObject migrationResult = ro.startMigration(vnfID);
+            if (migrationResult.getBoolean("success")) {
+                System.err.println("Violationbalance_serverRTTAnalyser: Performed migration of vnf => " + vnfID);
+                System.err.println("Migrated VNF ID is => " + migrationResult.getString("id"));
+            }
+        } catch (ResourceOrchestratorException | JSONException e) {
+            throw new ViolationAnalyserException("ViolationAnalyser error: " + e.getMessage());  
         }
-
-        return true;
+    return true;    
     }
     
 }

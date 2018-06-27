@@ -99,7 +99,7 @@ public class ViolationProcessor implements Runnable {
      * type of vnf can trigger some actions
      */
     public ViolationAnalyser trigger(String vnfType, String violationType, long timestamp) {
-        String vnfMod = vnfType.replaceAll(":", "");
+        String vnfMod = vnfType.replaceAll(":[a-zA-Z_0-9]*", ""); //should fix ":version" suffix in domain capabilities
         String className = "fivegex.sla.assurance.Violation" + vnfMod + violationType + "Analyser";
             
         ViolationAnalyser analyser = setupViolationAnalyser(className);

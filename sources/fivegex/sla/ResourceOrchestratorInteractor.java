@@ -8,12 +8,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -30,16 +35,13 @@ public class ResourceOrchestratorInteractor {
     private final int orchestratorPort;
     private final String orchestratorURL;
     private final String orchestratorEndpoint = "get-config?blocking";
-    
-    
-    private final String gvnfmAddress;
-    private final int gvnfmPort;
-    private final String gvnfmURL;
-    private final String gvnfmEndpoint = "edit-config?blocking";
-    
+    private final String orchestratorMappingEndpoint = "mappings";
+    private final String gVNFMEndpoint = "edit-config?blocking";
     
     private final String infraURI;
-    private final String gvnfmURI;
+    private final String mappingURI;
+    private final String gVNFMURI;
+    
     XMLResource infraView;
     Document infraViewDoc;
     
@@ -50,10 +52,7 @@ public class ResourceOrchestratorInteractor {
     
     public ResourceOrchestratorInteractor(String orchestratorAddress, 
                                           int orchestratorPort, 
-                                          String orchestratorURL,
-                                          String gvnfmAddress,
-                                          int gvnfmPort,
-                                          String gvnfmURL) {
+                                          String orchestratorURL) {
         
         logger = Logger.getLogger("log");
         logger.addOutput(System.err, new BitMask(MASK.ERROR));
@@ -63,12 +62,10 @@ public class ResourceOrchestratorInteractor {
         this.orchestratorPort = orchestratorPort;
         this.orchestratorURL = orchestratorURL;
         
-        this.gvnfmAddress = gvnfmAddress;
-        this.gvnfmPort = gvnfmPort;
-        this.gvnfmURL = gvnfmURL;
-        
         this.infraURI = "http://" + this.orchestratorAddress + ":" + this.orchestratorPort + this.orchestratorURL + orchestratorEndpoint;
-        this.gvnfmURI = "http://" + this.gvnfmAddress + ":" + this.gvnfmPort + this.gvnfmURL + gvnfmEndpoint;
+        this.mappingURI = "http://" + this.orchestratorAddress + ":" + this.orchestratorPort + this.orchestratorURL + orchestratorMappingEndpoint;
+        this.gVNFMURI = "http://" + this.orchestratorAddress + ":" + this.orchestratorPort + this.orchestratorURL + gVNFMEndpoint;
+        
         rest = new Resty();
         
     }
@@ -78,7 +75,7 @@ public class ResourceOrchestratorInteractor {
         try {
             infraView = rest.xml(infraURI);
         } catch (IOException ioe) {
-            throw new ResourceOrchestratorException("Error while getting infrastructure view from RO: " + ioe.getMessage());
+            throw new ResourceOrchestratorException("Error while getting infrastructure view from the Resource Orchestrator: " + ioe.getMessage());
         }
     }
     
@@ -95,7 +92,7 @@ public class ResourceOrchestratorInteractor {
                 retrieved = true;
                 
             } catch (IOException e) {
-                logger.logln(MASK.STDOUT, leadin() + "Error while getting infrastructure view from RO: " + e.getMessage());
+                logger.logln(MASK.STDOUT, leadin() + "Error while getting infrastructure view from the Resource Orchestrator: " + e.getMessage());
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException ie) {}
@@ -105,7 +102,7 @@ public class ResourceOrchestratorInteractor {
         }
         
         if (!retrieved)
-            throw new ResourceOrchestratorException("Could not retrieve infrastructure view from RO");
+            throw new ResourceOrchestratorException("Could not retrieve infrastructure view from the Resource Orchestrator");
     }
     
     
@@ -189,20 +186,100 @@ public class ResourceOrchestratorInteractor {
     }
     
     
-    public JSONObject startMigration() throws ResourceOrchestratorException {
+    public JSONObject startMigration(String vnfID) throws ResourceOrchestratorException {
         JSONObject response = new JSONObject();
         
-        try { 
-            XMLResource xml = rest.xml(gvnfmURI, content(getRequestBodyAsBytes(infraViewDoc)));
+        try {
+            // invoking mapping before performing migration and getting the lower level VNF ID
+            Document mappingBody = generateMappingBody(vnfID);
+            String lowerVNFid = getMappingInfo(mappingBody);
+            if (lowerVNFid.equals("NOT_FOUND"))
+                throw new ResourceOrchestratorException("Error: VNF => " + vnfID + " does not exist in the infrastructure");
             
-            // Might include additional info from above reply (once agreed on format)
-            response.put("success", true);
+            XMLResource xml = rest.xml(this.gVNFMURI, content(getRequestBodyAsBytes(infraViewDoc)));
+            
+            String lowerMigratedVNFid = getMappingInfo(mappingBody);
+            
+            if (lowerMigratedVNFid.equals(lowerVNFid)) 
+                response.put("success", false);
+            else {
+                response.put("success", true);
+                response.put("id", lowerMigratedVNFid);
+            }
+            
             return response;
             
         } catch (IOException | JSONException e) {
-            throw new ResourceOrchestratorException("Migration failed: cannot update infrastructure view on Slicer/ESCAPE. " + e.getMessage());
+            throw new ResourceOrchestratorException("Migration failed: cannot update infrastructure view on the Resource Orchestrator. " + e.getMessage());
           }
     }
+    
+    
+    private Document generateMappingBody(String vnfId) throws IOException {
+        String sliceId = this.orchestratorURL.split("/")[2];
+
+        Document doc=null;
+        
+        try {
+            doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            
+            Element mappings = doc.createElement("mappings");
+            doc.appendChild(mappings);
+
+            Element mapping = doc.createElement("mapping");
+            mappings.appendChild(mapping);
+
+            Element obj = doc.createElement("object");
+            mapping.appendChild(obj);
+            
+            obj.insertBefore(doc.createTextNode("/virtualizer[id=" + sliceId + "]/nodes/node[id=SingleBiSBiS]/NF_instances/node[id=" + vnfId + "]"), 
+                                                obj.getLastChild());
+        }
+            
+        catch (ParserConfigurationException | DOMException | IllegalArgumentException e) {
+               throw new IOException("Error while generating XML request body" + e.getMessage());
+        }
+  
+        return doc;
+    }
+    
+    
+    
+    private String getMappingInfo(Document mappingBody) throws IOException {
+        String lowerVNFid=null;
+        XMLResource mappingInfo;
+        
+        try {
+            mappingInfo = rest.xml(this.mappingURI, content(getRequestBodyAsBytes(mappingBody)));
+        } catch (IOException ioe) {
+            throw ioe;
+        }
+        
+        Document doc = mappingInfo.doc();
+        doc.getDocumentElement().normalize();
+        
+        NodeList mappings = doc.getElementsByTagName("mapping");
+        Node mapping = mappings.item(0);
+        if (mapping.getNodeType() == Node.ELEMENT_NODE) {
+            Element eElement = (Element) mapping;
+            NodeList target = eElement.getElementsByTagName("target");
+            Node targetElement = target.item(0);
+            if (targetElement.getNodeType() == Node.ELEMENT_NODE) {
+                Element tElement = (Element) targetElement;
+                lowerVNFid = tElement.getElementsByTagName("object").item(0).getTextContent();
+                
+                Pattern p = Pattern.compile("id=([^\\]]*)");
+                Matcher m = p.matcher(lowerVNFid);
+                
+                if (m.find()) {
+                    m.find();
+                    lowerVNFid = m.group(1);
+                }
+            }
+        }
+        return lowerVNFid;
+    }
+    
     
     
     private byte[] getRequestBodyAsBytes(Document doc) throws IOException {
@@ -252,18 +329,20 @@ public class ResourceOrchestratorInteractor {
     
     
     public static void main(String[] args) {
-        String escapeHost = "clayone.ee.ucl.ac.uk";
+        String escapeHost = "tusa.ee.ucl.ac.uk";
         int escapePort = 8888;
-        String escapeURL = "/escape/orchestration/";
-        String gvnfmURL = "/escape/orchestration/";
-        
+        String escapeURL = "/ro/v0/";
         
         try {
-            ResourceOrchestratorInteractor g = new ResourceOrchestratorInteractor(escapeHost, escapePort, escapeURL, escapeHost, escapePort, gvnfmURL);
-            g.getInfrastructureView();
-            g.getNFtype("host1");
-            g.setMigrationStatusOnNF("host1");
+            ResourceOrchestratorInteractor g = new ResourceOrchestratorInteractor(escapeHost, escapePort, escapeURL);
+            //g.getInfrastructureView();
+            //g.getNFtype("host1");
+            //g.setMigrationStatusOnNF("host1");
             //g.startMigration();
+            Document mappingBody = g.generateMappingBody("host003id");
+            String lowerVNFid = g.getMappingInfo(mappingBody);
+            System.out.println(lowerVNFid);
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
