@@ -194,21 +194,25 @@ public class ViolationHandler extends BasicRequestHandler implements RequestHand
                         System.err.println("Add \"violation\": key");
                     }
 
-                    System.err.println("recvd = " + recvd + " ");
+                    String violationType = recvd.getJSONArray("violation").getJSONObject(0).getString("contractUuid");
+                    
+                    if (violationType.startsWith("vnf")) {
+                        System.err.println("recvd = " + recvd + " ");
 
-                    // now try and find some relevant info
-                    ViolationInfo vInfo = violationInfo(recvd);
+                        // now try and find some relevant info
+                        ViolationInfo vInfo = violationInfo(recvd);
 
-                    // and put it onto the queue.
-                    LinkedBlockingQueue<ViolationInfo> queue = getServiceAssuranceManager().getQueue();
+                        // and put it onto the queue.
+                        LinkedBlockingQueue<ViolationInfo> queue = getServiceAssuranceManager().getQueue();
 
-                    try {
-                        queue.put(vInfo);
+                        try {
+                            queue.put(vInfo);
 
-                        System.err.println("ViolationHandler: added ViolationInfo event to queue " + vInfo);
-                    } catch (InterruptedException ie) {
-                        complain(response, "Cannot pass ViolationInfo into a queue");
-                        return;
+                            System.err.println("ViolationHandler: added ViolationInfo event to queue " + vInfo);
+                        } catch (InterruptedException ie) {
+                            complain(response, "Cannot pass ViolationInfo into a queue");
+                            return;
+                        }
                     }
                         
                 } else {
