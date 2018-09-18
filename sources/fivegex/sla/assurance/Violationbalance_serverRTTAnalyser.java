@@ -30,7 +30,7 @@ public class Violationbalance_serverRTTAnalyser implements ViolationAnalyser {
     
     
     private void sendMonitoringRequest() throws IOException {
-        String imosURL = "http://" + ro.getOrchestratorAddress() + ":2222/monitoring/?vnfid=" + vnfID;
+        String imosURL = "http://imos:2222/monitoring/?vnfid=" + vnfID;
         System.err.println("Sending monitoring reconfiguration request to: " + imosURL);
         try {
             r.json(imosURL, form("")).toObject();
