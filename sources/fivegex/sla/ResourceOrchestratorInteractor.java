@@ -325,6 +325,11 @@ public class ResourceOrchestratorInteractor {
  
         return result;
     }
+
+    
+    public String getOrchestratorAddress() {
+        return orchestratorAddress;
+    }
     
     
     
