@@ -32,11 +32,7 @@ public class Violationbalance_serverRTTAnalyser implements ViolationAnalyser {
     private void sendMonitoringRequest() throws IOException {
         String imosURL = "http://imos:2222/monitoring/?vnfid=" + vnfID;
         System.err.println("Sending monitoring reconfiguration request to: " + imosURL);
-        try {
-            r.json(imosURL, form("")).toObject();
-        } catch (JSONException je) {
-            throw new IOException(je);
-        }
+        r.json(imosURL, form(""));
     }
     
 
@@ -49,13 +45,14 @@ public class Violationbalance_serverRTTAnalyser implements ViolationAnalyser {
                 System.err.println("Violationbalance_serverRTTAnalyser: Performed migration of vnf => " + vnfID);
                 System.err.println("Migrated VNF ID is => " + migrationResult.getString("id"));
                 sendMonitoringRequest();
+                return true;
             }
         } catch (ResourceOrchestratorException | JSONException e) {
             throw new ViolationAnalyserException("ViolationAnalyser error: " + e.getMessage());  
         } catch (IOException ie) {
-            throw new ViolationAnalyserException("ViolationAnalyser error: " + ie.getMessage());  
+            throw new ViolationAnalyserException("ViolationAnalyser error while sending monitoring reconfiguration request: " + ie.getMessage());  
         }
-    return true;    
+    return false;    
     }
     
 }

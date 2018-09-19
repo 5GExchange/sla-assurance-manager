@@ -196,6 +196,7 @@ public class ResourceOrchestratorInteractor {
             if (lowerVNFid.equals("NOT_FOUND"))
                 throw new ResourceOrchestratorException("Error: VNF => " + vnfID + " does not exist in the infrastructure");
             
+            System.err.println("Starting Migration: sending request to RO");
             XMLResource xml = rest.xml(this.gVNFMURI, content(getRequestBodyAsBytes(infraViewDoc)));
             
             String lowerMigratedVNFid = getMappingInfo(mappingBody);
@@ -207,6 +208,7 @@ public class ResourceOrchestratorInteractor {
                 response.put("id", lowerMigratedVNFid);
             }
             
+            System.err.println("RO response:" + response);
             return response;
             
         } catch (IOException | JSONException e) {

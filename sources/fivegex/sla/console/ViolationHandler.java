@@ -191,7 +191,7 @@ public class ViolationHandler extends BasicRequestHandler implements RequestHand
                         // and try again
                         recvd = new JSONObject(value.toString());
 
-                        System.err.println("Add \"violation\": key");
+                        //System.err.println("Add \"violation\": key");
                     }
 
                     String violationType = recvd.getJSONArray("violation").getJSONObject(0).getString("contractUuid");
